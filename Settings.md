@@ -103,4 +103,5 @@ These settings belong to the reusable targeting system. Edit component defaults 
 
 Acquisition and manual switching use different cones. The acquisition minimum view dot can admit targets behind the camera when negative; set it to zero or above for a forward-only acquisition region. Manual switching never selects behind the camera.
 
-If Target Lock helps your project, consider an honest review on the **[Target Lock Fab listing](https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9)**.
+> [!NOTE]
+> If Target Lock helps your project, consider an honest review on the **[Target Lock Fab listing](https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9)**.

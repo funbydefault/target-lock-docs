@@ -3,6 +3,7 @@
 <title>Target Lock | FunByDefault</title><style>
 :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#182636;background:#f5f7fa;line-height:1.65;font-size:16px;scroll-behavior:smooth}
 *{box-sizing:border-box}body{margin:0}a{color:#075ec3;text-underline-offset:3px}a:hover{color:#004290}header{background:#101f30;color:#eef5ff;padding:26px 5vw;display:flex;justify-content:space-between;align-items:center;gap:18px}header strong{font-size:23px;letter-spacing:-.6px}header span{color:#a9bfd5;font-size:14px}.layout{display:grid;grid-template-columns:220px minmax(0,940px);gap:48px;max-width:1260px;margin:0 auto;padding:40px 28px}nav{position:sticky;top:28px;align-self:start}nav a{display:block;padding:9px 12px;border-radius:6px;text-decoration:none}nav a:hover{background:#e8eff7}nav small{display:block;padding:8px 12px;color:#5c6d7d}main{min-width:0}section{scroll-margin-top:22px;padding-bottom:40px}section+section{border-top:1px solid #cfd9e2;padding-top:28px}h1{font-size:36px;line-height:1.2;letter-spacing:-1px;margin:0 0 18px}h2{font-size:24px;margin:36px 0 14px;line-height:1.3}h3{font-size:19px;margin-top:28px}p{margin:14px 0}li{padding:3px 0}code{font-family:Consolas,monospace;font-size:.88em;background:#e8edf3;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:18px;background:#112234;color:#dbeaff;overflow:auto;border-radius:9px}pre code{background:none;padding:0;color:inherit;overflow-wrap:normal}table{border-collapse:collapse;width:100%;font-size:15px;margin:20px 0;table-layout:fixed}th,td{border-bottom:1px solid #d5dee8;padding:12px 14px;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#e7eef6}th:first-child,td:first-child{width:34%}tbody tr:nth-child(even){background:#edf2f7}blockquote{margin:22px 0;padding:14px 20px;border-left:4px solid #227bd7;background:#e6f0fd;border-radius:0 8px 8px 0}blockquote p{margin:0}footer{padding:24px 5vw;color:#5c6d7d;border-top:1px solid #d5dee8;font-size:14px}@media(max-width:800px){.layout{display:block;padding:26px 18px}nav{position:static;display:flex;flex-wrap:wrap;gap:4px;margin-bottom:28px}nav small{width:100%}header{align-items:flex-start;flex-direction:column}h1{font-size:30px}th,td{padding:10px 8px}table{font-size:14px}}@media(prefers-reduced-motion:reduce){:root{scroll-behavior:auto}}
+.review-callout{margin:30px 0;padding:20px 24px;background:#eaf3ff;border:1px solid #bdd7f7;border-radius:12px}.review-callout p{margin:0}.review-callout a{display:inline-block;margin:6px 2px;padding:5px 13px;border-radius:24px;background:#1265bd;color:white;text-decoration:none}.review-callout a:hover{background:#094b91}a:focus-visible{outline:3px solid #d58b13;outline-offset:4px}
 </style></head><body><header><strong>Target Lock</strong><span>FunByDefault / Unreal Engine / 1.0.1 candidate</span></header>
 <div class="layout"><nav aria-label="Documentation"><small>DOCUMENTATION</small><a href="#README">Start here</a><a href="#Integration">Integrate your project</a><a href="#Settings">Settings reference</a><a href="#ReleaseNotes">Upgrade notes</a><a href="#README-troubleshooting">Troubleshooting</a><a href="#README-support">Support</a></nav><main><section id="README" aria-label="README"><h1 id="README-target-lock">Target Lock</h1>
 <p><strong>Configurable target selection for Unreal Engine, with Blueprint and C++ integration.</strong></p>
@@ -133,7 +134,8 @@ Selected targets and lock state are local. They are not an authoritative replica
 <p>Temporarily use <strong>Set Debug Draw Enabled</strong> to inspect the current target and cached visibility result in a development build. Disable diagnostics for normal use.</p>
 <h2 id="README-support">Support</h2>
 <p>Use <a href="https://discord.com/invite/GKjSWjvEnm">support on Discord</a> or email <strong><a href="mailto:funbydefault.dev@gmail.com">funbydefault.dev@gmail.com</a></strong>. Include plugin version, Unreal version, platform, steps from a fresh launch, relevant settings, and the smallest useful log excerpt. Reproduce in a blank project where possible. Remove credentials, proprietary assets, and customer data before sharing a reproduction.</p>
-<blockquote class="notice"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p></blockquote>
+<aside class="review-callout"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p>
+</aside>
 </section>
 <section id="Integration" aria-label="Integration"><h1 id="Integration-use-target-lock-in-an-existing-project">Use Target Lock in an existing project</h1>
 <p>Add Target Lock to your existing Character, Pawn, or Actor. Keep your GameMode, controller, input mapping, mesh, skeleton, animation Blueprint, and combat system. The showcase classes are optional examples.</p>
@@ -279,7 +281,8 @@ FVector GetTargetLocation_Implementation() const override;
 <p>Selection and lock state are local. The optional controller-rotation RPC does not replicate an authoritative combat target. Your server must validate target eligibility, range, line of sight, and damage using your existing multiplayer architecture.</p>
 <p>Existing reflected class, component, property, and asset names remain unchanged. External presentation defaults off, so existing Character setups retain their configured presentation. Existing Blueprint calls to <strong>Get Target Location</strong> retain the same function name; subclasses can now override it. Rebuild C++ modules and compile project Blueprints after updating. Back up production projects before replacing plugin source or assets.</p>
 <p>The independent integration checks cover UE 5.4 and UE 5.8 locally. Individual third-party frameworks and the complete release engine/platform matrix need their own validation.</p>
-<blockquote class="notice"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p></blockquote>
+<aside class="review-callout"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p>
+</aside>
 </section>
 <section id="Settings" aria-label="Settings"><h1 id="Settings-settings-reference">Settings reference</h1>
 <p><a href="#README">Main guide</a> · <a href="#Integration">Integration</a> · <a href="#ReleaseNotes">Upgrade notes</a></p>
@@ -618,9 +621,10 @@ FVector GetTargetLocation_Implementation() const override;
 </tr>
 </tbody></table>
 <p>Acquisition and manual switching use different cones. The acquisition minimum view dot can admit targets behind the camera when negative; set it to zero or above for a forward-only acquisition region. Manual switching never selects behind the camera.</p>
-<blockquote class="notice"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p></blockquote>
+<aside class="review-callout"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p>
+</aside>
 </section>
-<section id="ReleaseNotes" aria-label="ReleaseNotes"><h1 id="ReleaseNotes-target-lock-system-1-0-1">Target Lock System 1.0.1</h1>
+<section id="ReleaseNotes" aria-label="ReleaseNotes"><h1 id="ReleaseNotes-target-lock-1-0-1">Target Lock 1.0.1</h1>
 <p>Release candidate documentation. The published Fab version remains the authoritative compatibility record until this update is approved.</p>
 <h2 id="ReleaseNotes-changes">Changes</h2>
 <ul>
@@ -639,5 +643,6 @@ FVector GetTargetLocation_Implementation() const override;
 <p>Camera-origin visibility is now the default. Existing serialized component settings may retain their previous origin. Review <strong>Line Of Sight Origin</strong> on existing components. Choose <strong>Character Eyes</strong> explicitly only if that is the intended behavior in your game.</p>
 <p>For custom C++ anchor subclasses, <code>CanBeLockedBy()</code> remains available. Prefer <code>IsTargetAllowedForSource_Implementation()</code> when project rules should run after built-in eligibility checks. <code>GetTargetLocation_Implementation()</code> and <code>GetTargetLockViewPoint_Implementation()</code> are the new Blueprint-native extension points.</p>
 <p>To roll back, restore the previous plugin and the matching project backup together. Do not save shared content in a newer Unreal version if older-engine compatibility is required.</p>
-<blockquote class="notice"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p></blockquote>
+<aside class="review-callout"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p>
+</aside>
 </section></main></div><footer>Target Lock documentation · FunByDefault</footer></body></html>

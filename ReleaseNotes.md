@@ -1,4 +1,4 @@
-# Target Lock System 1.0.1
+# Target Lock 1.0.1
 
 Release candidate documentation. The published Fab version remains the authoritative compatibility record until this update is approved.
 
@@ -25,4 +25,5 @@ For custom C++ anchor subclasses, `CanBeLockedBy()` remains available. Prefer `I
 
 To roll back, restore the previous plugin and the matching project backup together. Do not save shared content in a newer Unreal version if older-engine compatibility is required.
 
-If Target Lock helps your project, consider an honest review on the **[Target Lock Fab listing](https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9)**.
+> [!NOTE]
+> If Target Lock helps your project, consider an honest review on the **[Target Lock Fab listing](https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9)**.

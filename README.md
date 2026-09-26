@@ -94,4 +94,5 @@ Temporarily use **Set Debug Draw Enabled** to inspect the current target and cac
 
 Use [support on Discord](https://discord.com/invite/GKjSWjvEnm) or email **funbydefault.dev@gmail.com**. Include plugin version, Unreal version, platform, steps from a fresh launch, relevant settings, and the smallest useful log excerpt. Reproduce in a blank project where possible. Remove credentials, proprietary assets, and customer data before sharing a reproduction.
 
-If Target Lock helps your project, consider an honest review on the **[Target Lock Fab listing](https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9)**.
+> [!NOTE]
+> If Target Lock helps your project, consider an honest review on the **[Target Lock Fab listing](https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9)**.

@@ -128,4 +128,5 @@ Existing reflected class, component, property, and asset names remain unchanged.
 
 The independent integration checks cover UE 5.4 and UE 5.8 locally. Individual third-party frameworks and the complete release engine/platform matrix need their own validation.
 
-If Target Lock helps your project, consider an honest review on the **[Target Lock Fab listing](https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9)**.
+> [!NOTE]
+> If Target Lock helps your project, consider an honest review on the **[Target Lock Fab listing](https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9)**.
