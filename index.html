@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Target Lock | FunByDefault</title><style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#182636;background:#f5f7fa;line-height:1.65;font-size:16px;scroll-behavior:smooth}
+*{box-sizing:border-box}body{margin:0}a{color:#075ec3;text-underline-offset:3px}a:hover{color:#004290}header{background:#101f30;color:#eef5ff;padding:26px 5vw;display:flex;justify-content:space-between;align-items:center;gap:18px}header strong{font-size:23px;letter-spacing:-.6px}header span{color:#a9bfd5;font-size:14px}.layout{display:grid;grid-template-columns:220px minmax(0,940px);gap:48px;max-width:1260px;margin:0 auto;padding:40px 28px}nav{position:sticky;top:28px;align-self:start}nav a{display:block;padding:9px 12px;border-radius:6px;text-decoration:none}nav a:hover{background:#e8eff7}nav small{display:block;padding:8px 12px;color:#5c6d7d}main{min-width:0}section{scroll-margin-top:22px;padding-bottom:40px}section+section{border-top:1px solid #cfd9e2;padding-top:28px}h1{font-size:36px;line-height:1.2;letter-spacing:-1px;margin:0 0 18px}h2{font-size:24px;margin:36px 0 14px;line-height:1.3}h3{font-size:19px;margin-top:28px}p{margin:14px 0}li{padding:3px 0}code{font-family:Consolas,monospace;font-size:.88em;background:#e8edf3;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:18px;background:#112234;color:#dbeaff;overflow:auto;border-radius:9px}pre code{background:none;padding:0;color:inherit;overflow-wrap:normal}table{border-collapse:collapse;width:100%;font-size:15px;margin:20px 0;table-layout:fixed}th,td{border-bottom:1px solid #d5dee8;padding:12px 14px;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#e7eef6}th:first-child,td:first-child{width:34%}tbody tr:nth-child(even){background:#edf2f7}blockquote{margin:22px 0;padding:14px 20px;border-left:4px solid #227bd7;background:#e6f0fd;border-radius:0 8px 8px 0}blockquote p{margin:0}footer{padding:24px 5vw;color:#5c6d7d;border-top:1px solid #d5dee8;font-size:14px}@media(max-width:800px){.layout{display:block;padding:26px 18px}nav{position:static;display:flex;flex-wrap:wrap;gap:4px;margin-bottom:28px}nav small{width:100%}header{align-items:flex-start;flex-direction:column}h1{font-size:30px}th,td{padding:10px 8px}table{font-size:14px}}@media(prefers-reduced-motion:reduce){:root{scroll-behavior:auto}}
+</style></head><body><header><strong>Target Lock</strong><span>FunByDefault / Unreal Engine / 1.0.1 candidate</span></header>
+<div class="layout"><nav aria-label="Documentation"><small>DOCUMENTATION</small><a href="#README">Start here</a><a href="#Integration">Integrate your project</a><a href="#Settings">Settings reference</a><a href="#ReleaseNotes">Upgrade notes</a><a href="#README-troubleshooting">Troubleshooting</a><a href="#README-support">Support</a></nav><main><section id="README" aria-label="README"><h1 id="README-target-lock">Target Lock</h1>
+<p><strong>Configurable target selection for Unreal Engine, with Blueprint and C++ integration.</strong></p>
+<p>Add targeting to your existing character, pawn, or actor. Use the built-in camera and movement behavior, or let your own systems handle presentation through events and Blueprint overrides.</p>
+<blockquote class="notice"><p><strong>NOTE</strong><br>
+This guide describes the <strong>1.0.1 release candidate</strong>. Check the <a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Fab listing</a> for the currently available release and supported engine versions.</p>
+</blockquote>
+<p><a href="#Integration">Integration guide</a> · <a href="#Settings">Settings reference</a> · <a href="#ReleaseNotes">Upgrade notes</a></p>
+<h2 id="README-install">Install</h2>
+<ol>
+<li>Install the plugin for your Unreal Engine version from your Fab library. For a source delivery, put its <code>TargetLock</code> folder inside your project&#39;s <code>Plugins</code> folder.</li>
+<li>Open the project, enable <strong>Target Lock System</strong> in <strong>Edit &gt; Plugins</strong>, and restart if requested. Source installations require the supported Unreal C++ toolchain to compile the plugin.</li>
+<li>Open your player Blueprint and add <strong>Target Lock Component</strong>.</li>
+<li>Add <strong>Target Lock Anchor</strong> to each target Blueprint and place it at the intended focus point, such as the chest. Attach it to a mesh socket if it should follow an animated bone.</li>
+<li>Connect your input action&#39;s <strong>Started</strong> event to <strong>Toggle Target Lock</strong>. Connect directional actions to <strong>Switch Target By Input Direction</strong>, using <code>(-1, 0)</code> for left and <code>(1, 0)</code> for right.</li>
+</ol>
+<p>The plugin does not require a demo base class, a particular skeleton, a combat framework, or an input-mapping asset. It enables Unreal&#39;s built-in <strong>Animation Compression Library</strong> for the included animation content. No separately purchased plugin is required.</p>
+<blockquote class="notice"><p><strong>TIP</strong><br>
+Already have a camera, locomotion, or UI system? Enable <strong>Use External Presentation</strong> before play. Target Lock keeps selecting and tracking targets while your systems respond to its events.</p>
+</blockquote>
+<h2 id="README-how-targeting-works">How targeting works</h2>
+<p>Anchors register with a world-local subsystem during play and unregister when removed. Acquisition filters them by eligibility, distance, view angle, and optional visibility, then chooses the lowest weighted score. <strong>Priority Bias</strong> on an anchor lowers its score to make it more attractive.</p>
+<p>Visibility defaults to the current camera. An acquired target must be visible immediately; an existing lock tolerates <strong>0.65 seconds</strong> of continuous obstruction by default. A clear visibility check resets that timer. Destruction, disabled eligibility, an unavailable view, and excess retention distance are separate loss conditions.</p>
+<p>Directional switching uses a <strong>160-degree full cone</strong> around camera forward by default, plus camera-to-target line of sight. Targets just outside the viewport can qualify; targets behind the camera cannot. Switching is anchor-based, so several weak points on the same actor can be separate candidates.</p>
+<p><strong>Set Target Anchor</strong> accepts a target chosen by another system. It bypasses automatic scoring while retaining eligibility, retention-distance, and configured visibility checks. Passing an empty anchor clears the selection.</p>
+<h2 id="README-connect-existing-systems">Connect existing systems</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Connection</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Enter or leave lock-on locomotion</td>
+<td><strong>On Target Lock State Changed</strong></td>
+</tr>
+<tr>
+<td>Update combat selection or target UI</td>
+<td><strong>On Target Lock Target Changed</strong></td>
+</tr>
+<tr>
+<td>Read the selected enemy</td>
+<td><strong>Get Current Target Actor</strong></td>
+</tr>
+<tr>
+<td>Drive an external camera</td>
+<td><strong>Get Current Target Focus Location</strong>, after checking <strong>Is Target Lock Active</strong></td>
+</tr>
+<tr>
+<td>Use a custom camera source</td>
+<td>Override <strong>Get Target Lock View Point</strong> in a component Blueprint</td>
+</tr>
+<tr>
+<td>Filter teams, health, or ability states</td>
+<td>Override <strong>Is Target Allowed For Source</strong> in an anchor Blueprint</td>
+</tr>
+<tr>
+<td>Aim at a computed weak point</td>
+<td>Override <strong>Get Target Location</strong></td>
+</tr>
+</tbody></table>
+<p>The <a href="#Integration">integration guide</a> includes the exact Blueprint steps, ownership transitions, socket setup, and C++ extension points.</p>
+<h2 id="README-input-and-animation">Input and animation</h2>
+<p>The API accepts input from Enhanced Input, legacy bindings, gamepad, or touch. Toggle and switch actions should fire once per press or gesture. For a stick, trigger at a threshold and re-arm after returning to the dead zone. Calling the action every frame produces repeated switches.</p>
+<p>Switch directions use positive X for right and positive Y for down. <strong>Switch Target By Touch Swipe</strong> accepts an end-minus-start drag delta in screen pixels; its default minimum distance is 48 pixels. Alternatively, <strong>Get Touch Swipe Direction</strong> returns a normalized direction without switching.</p>
+<p>Animation remains part of your character. Use <strong>Is Target Lock Active</strong> to choose your locked locomotion state and provide forward, backward, and strafe clips appropriate to its skeleton. Match animation playback to movement speed. Target Lock does not retarget arbitrary character animations.</p>
+<h2 id="README-camera-movement-and-ui">Camera, movement, and UI</h2>
+<p>Built-in presentation can rotate the controller and owning actor, adjust Character Movement rotation and speed, blend a camera position, and display a reticle. Each behavior has its own switch. Character Movement options apply only to an <code>ACharacter</code> with <code>UCharacterMovementComponent</code>; other actors use the same targeting API and integrate their own movement through events.</p>
+<p>Camera position is an <strong>absolute relative location</strong>, not an additive delta. It applies to the active Camera&#39;s attached Spring Arm, or the Camera itself when there is no Spring Arm. Modified rigs are restored on release. Turn off the previous Camera when changing active rigs.</p>
+<p><strong>Use External Presentation</strong> leaves camera transforms, controller and actor rotation, movement settings, and UI to your project. To change this during play, call <strong>Set External Presentation Enabled</strong>. Enabling it restores settings previously changed by the component and removes its reticle while preserving selection. Transfer ownership before another system starts writing those same settings.</p>
+<p>The reusable default reticle is a native amber widget. Replace <strong>Focused Target Reticle Widget Class</strong> with your own <code>UUserWidget</code>, or derive from <code>TargetLockReticleWidget</code> to tune its colors and geometry. A visible reticle requires an active lock, built-in presentation, and a locally controlled Pawn.</p>
+<h2 id="README-performance-and-networking">Performance and networking</h2>
+<p>The reusable component ticks only while actively locked or blending a camera offset. Active-lock visibility checks run at the configured interval. Debug drawing and transition logging are off by default. Acquisition scans registered anchors; large target populations should be profiled in the intended game.</p>
+<blockquote class="notice"><p><strong>IMPORTANT</strong><br>
+Selected targets and lock state are local. They are not an authoritative replicated combat contract. Your server must validate eligibility, range, visibility, abilities, and damage.</p>
+</blockquote>
+<p>The optional owner-to-server controller-rotation RPC is disabled by default, unreliable, and rate-limited from 1 to 60 updates per second. It requires the owning replicated Pawn and Player Controller relationship. It does not provide server-authoritative target selection or an anti-cheat boundary.</p>
+<h2 id="README-troubleshooting">Troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Activation returns false</td>
+<td>Confirm an enabled anchor in the same world, a usable view, acquisition distance and cone, the optional interface requirement, project eligibility, and cover collision.</td>
+</tr>
+<tr>
+<td>Lock immediately changes or drops</td>
+<td>Check retention distance, anchor eligibility, destruction, camera availability, and the configured trace channel. The grace timer applies to obstruction only.</td>
+</tr>
+<tr>
+<td>A wall does not block targeting</td>
+<td>Make its collision block <strong>Line Of Sight Trace Channel</strong>, usually Visibility. Keep additional target probes inside the target&#39;s body.</td>
+</tr>
+<tr>
+<td>Switching ignores an off-screen enemy</td>
+<td>Confirm it lies within <strong>Direction Switch View Angle</strong>, matches the requested direction, and has camera line of sight.</td>
+</tr>
+<tr>
+<td>Camera and locomotion fight each other</td>
+<td>Enable external presentation, or disable each built-in behavior already owned by your framework.</td>
+</tr>
+<tr>
+<td>Aim is too high or low</td>
+<td>Move the anchor or set its <strong>World Offset</strong>. <strong>Focus Point World Offset</strong> changes aiming separately from anchor visibility and reticle placement.</td>
+</tr>
+<tr>
+<td>Camera jumps</td>
+<td>Check the absolute relative camera location and which Camera or Spring Arm is active.</td>
+</tr>
+<tr>
+<td>Reticle is missing</td>
+<td>Check active state, local possession, widget class, <strong>Show Focused Target Reticle</strong>, and external presentation.</td>
+</tr>
+<tr>
+<td>Automatic polling does nothing</td>
+<td>Enable it before Begin Play and possess the Pawn with a local Player Controller. Direct input bindings can leave polling disabled.</td>
+</tr>
+<tr>
+<td>Gamepad or touch switches vertically backwards</td>
+<td>Convert the device&#39;s axis convention to positive Y down.</td>
+</tr>
+</tbody></table>
+<p>Temporarily use <strong>Set Debug Draw Enabled</strong> to inspect the current target and cached visibility result in a development build. Disable diagnostics for normal use.</p>
+<h2 id="README-support">Support</h2>
+<p>Use <a href="https://discord.com/invite/GKjSWjvEnm">support on Discord</a> or email <strong><a href="mailto:funbydefault.dev@gmail.com">funbydefault.dev@gmail.com</a></strong>. Include plugin version, Unreal version, platform, steps from a fresh launch, relevant settings, and the smallest useful log excerpt. Reproduce in a blank project where possible. Remove credentials, proprietary assets, and customer data before sharing a reproduction.</p>
+<blockquote class="notice"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p></blockquote>
+</section>
+<section id="Integration" aria-label="Integration"><h1 id="Integration-use-target-lock-in-an-existing-project">Use Target Lock in an existing project</h1>
+<p>Add Target Lock to your existing Character, Pawn, or Actor. Keep your GameMode, controller, input mapping, mesh, skeleton, animation Blueprint, and combat system. The showcase classes are optional examples.</p>
+<h2 id="Integration-basic-blueprint-setup">Basic Blueprint setup</h2>
+<ol>
+<li>Enable <strong>Target Lock System</strong> and restart the editor if requested.</li>
+<li>In your player Blueprint, add <strong>Target Lock Component</strong>.</li>
+<li>In each target Blueprint, add <strong>Target Lock Anchor</strong>. Place it at the chest or another intended focus point. For a moving bone, attach the anchor to a socket on the target&#39;s skeletal mesh.</li>
+<li>Bind your lock input action&#39;s <strong>Started</strong> event to <strong>Toggle Target Lock</strong>. For a UMG button, use <strong>On Clicked</strong>. Leave <strong>Automatic Toggle Input Polling</strong> disabled when your input system handles this.</li>
+<li>Play. Bind left and right actions to <strong>Switch Target By Input Direction</strong>, using <code>(-1, 0)</code> and <code>(1, 0)</code>.</li>
+</ol>
+<p>The default component supplies camera-facing rotation, optional Character Movement settings, and a reticle. Acquisition and visibility use the owning Pawn&#39;s Player Controller camera view. Without a Player Controller, it uses an active Camera Component on the owner, then the actor&#39;s eye viewpoint. A separate camera actor used through <code>Set View Target</code> is already covered by the Player Controller path.</p>
+<p>Anchors register and unregister automatically during play. Targets need no shared base class or interface unless you explicitly enable <strong>Require Target Lockable Interface</strong>. Multiple anchors can be used for different weak points; switching selects anchors, so two points on the same actor may both be candidates.</p>
+<h2 id="Integration-keep-your-existing-camera-movement-and-ui">Keep your existing camera, movement, and UI</h2>
+<p>Enable <strong>Target Lock → Integration → Use External Presentation</strong> on the component before play.</p>
+<p>Target Lock still handles acquisition, switching, eligibility, visibility, loss grace, and events. Your systems own camera position, controller rotation, actor rotation, movement settings, and UI. This is the starting point for a custom locomotion framework, ability-driven movement, Mover, a vehicle, or an existing combat camera; those specific frameworks still need your project&#39;s event wiring.</p>
+<table>
+<thead>
+<tr>
+<th>Connection</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>On Target Lock State Changed</strong></td>
+<td>Enter or leave your lock-on movement/camera state.</td>
+</tr>
+<tr>
+<td><strong>On Target Lock Target Changed</strong></td>
+<td>Notify combat, update target UI, or play a switch cue. <code>New Target</code> can be empty when selection clears.</td>
+</tr>
+<tr>
+<td><strong>Is Target Lock Active</strong></td>
+<td>Check before applying ongoing camera or animation behavior.</td>
+</tr>
+<tr>
+<td><strong>Get Current Target Actor</strong></td>
+<td>Resolve the selected enemy for your combat system; returns empty without a selection.</td>
+</tr>
+<tr>
+<td><strong>Get Current Target Focus Location</strong></td>
+<td>Read the current world focus position for your camera; returns zero without a selection.</td>
+</tr>
+<tr>
+<td><strong>Get Current Target Anchor</strong></td>
+<td>Read the exact weak point when an actor has multiple anchors.</td>
+</tr>
+</tbody></table>
+<p>Use <strong>Set External Presentation Enabled</strong> to change ownership during play. Enabling it restores settings previously changed by the component and removes its reticle, while retaining the selected target. Disabling it reapplies the configured built-in presentation. Switch to external presentation before letting another system take over the same movement or camera properties.</p>
+<p>For partial customization, leave external presentation disabled and turn off just the built-in behaviors you replace: <strong>Rotate Controller To Target</strong>, <strong>Rotate Character To Target</strong>, <strong>Adjust Movement Rotation Settings</strong>, <strong>Use Locked Max Walk Speed</strong>, <strong>Use Camera Position Offset</strong>, or <strong>Show Focused Target Reticle</strong>. The component restores only the movement setting groups it actually changed.</p>
+<h3 id="Integration-supply-a-custom-camera-view">Supply a custom camera view</h3>
+<p>If your view does not come from the owning Pawn&#39;s Player Controller or an owner Camera Component:</p>
+<ol>
+<li>Create a Blueprint derived from <strong>Target Lock Component</strong> and add that component to the owner in place of the base component.</li>
+<li>Override <strong>Get Target Lock View Point</strong>.</li>
+<li>Return your camera&#39;s world position and rotation, and set the return value to true. Return false when that view is unavailable; acquisition fails and an existing lock is released.</li>
+</ol>
+<p>The override drives selection, camera-origin visibility, and directional switching. Queries can run several times per update: read state without changing it. If this view differs from the Player Controller&#39;s camera, screen-center scoring is skipped automatically; distance and view-angle scoring still apply.</p>
+<h2 id="Integration-connect-health-teams-or-abilities">Connect health, teams, or abilities</h2>
+<p>Create a Blueprint derived from <strong>Target Lock Anchor Component</strong> and use it on your enemies. Override <strong>Is Target Allowed For Source</strong> to read the rules your game already owns, for example:</p>
+<pre><code class="language-text">Source Actor → resolve player&#39;s team
+Get Owner → resolve target&#39;s team and health
+Return: target is alive AND target is hostile to Source Actor
+</code></pre>
+<p>Use your existing interface, component, tags, or ability system to answer those queries. The plugin does not require a particular health or team implementation. Keep the query free of side effects. A false result excludes that anchor from acquisition and switching, and releases an existing lock on the next target update. Eligibility loss is immediate; the visibility grace period applies to obstruction only.</p>
+<p>For a simple death/disable path, call <strong>Set Anchor Enabled(false)</strong>. The built-in enabled, self-target, and optional marker-interface checks still apply before the Blueprint rule.</p>
+<h2 id="Integration-choose-the-focus-point">Choose the focus point</h2>
+<p>Usually, moving the anchor or attaching it to a mesh socket is enough. <strong>World Offset</strong> adds a world-space offset in centimeters. For a computed weak point, override <strong>Get Target Location</strong> in your anchor Blueprint and return a finite world-space position.</p>
+<p>That point controls selection, visibility probes, and the reticle. <strong>Focus Point World Offset</strong> on the lock component adds a final aiming offset for built-in rotation and <strong>Get Current Target Focus Location</strong>; it does not move the anchor or visibility probes.</p>
+<h2 id="Integration-tune-selection-and-visibility">Tune selection and visibility</h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Acquire Search Settings / Max Distance</strong></td>
+<td>Maximum acquisition distance from the search viewpoint, in centimeters. Activation also respects the owner&#39;s retention distance.</td>
+</tr>
+<tr>
+<td><strong>Minimum View Dot</strong></td>
+<td>Acquisition cone: <code>1</code> is directly forward, <code>0</code> reaches 90° to either side, negative values allow acquisition behind the view.</td>
+</tr>
+<tr>
+<td><strong>Direction Switch View Angle</strong></td>
+<td>Full camera-forward switching cone, default 160°. An off-screen target can qualify inside the cone; targets behind the camera cannot.</td>
+</tr>
+<tr>
+<td><strong>Line Of Sight Trace Channel</strong></td>
+<td>Channel your walls and cover should block.</td>
+</tr>
+<tr>
+<td><strong>Line Of Sight Origin</strong></td>
+<td>Defaults to <strong>Player View Point</strong>, including a custom view override. Manual switches always require camera-to-target visibility.</td>
+</tr>
+<tr>
+<td><strong>Line Of Sight Loss Grace Period</strong></td>
+<td>How long an existing target must remain continuously obstructed before it is lost. Default 0.65 seconds. Acquisition and switching still require visibility immediately.</td>
+</tr>
+<tr>
+<td><strong>Lose Target Distance</strong></td>
+<td>Separate retention distance. Zero disables distance-based loss.</td>
+</tr>
+<tr>
+<td><strong>Auto Retarget When Lost</strong></td>
+<td>Select another eligible target when the current one becomes invalid.</td>
+</tr>
+<tr>
+<td><strong>Additional Line Of Sight Probe Offsets</strong></td>
+<td>Extra points for a large target. Keep them inside the target&#39;s body to avoid visibility around unrelated cover.</td>
+</tr>
+</tbody></table>
+<p>The lowest weighted score wins; <strong>Priority Bias</strong> favors an anchor by subtracting from its score. Target Lock does not require an enemy to face the player.</p>
+<p>If another targeting system already chooses an enemy, pass its anchor to <strong>Set Target Anchor</strong> with <strong>Activate If Needed</strong> enabled. This explicit selection bypasses automatic candidate scoring while preserving eligibility, retention-distance, and configured visibility validation. Passing an empty anchor clears the selection.</p>
+<h2 id="Integration-input-and-animation">Input and animation</h2>
+<p>The same API accepts Enhanced Input, legacy input, gamepad, or touch. For a gamepad stick, trigger one directional switch as the stick crosses a threshold, then re-arm after it returns to the dead zone. Do not call Toggle or Switch every frame from a continuously triggered input action. Positive X means right; positive Y means down, so invert a device axis that reports up as positive.</p>
+<p>Touch can call <strong>Switch Target By Touch Swipe</strong> with a screen-pixel drag delta. It returns false below the supplied threshold. Trigger once per gesture, then re-arm on release.</p>
+<p>Use <strong>Is Target Lock Active</strong> to choose your animation Blueprint&#39;s locked locomotion state. Supply forward, backward, and strafe animations for your own skeleton, and match playback to movement speed. Target selection has no skeleton dependency; it does not retarget animations or build an arbitrary character&#39;s locomotion for you.</p>
+<h2 id="Integration-c-integration">C++ integration</h2>
+<p>Add <code>TargetLock</code> to your module&#39;s dependencies. Use a public dependency if Target Lock types appear in public headers; otherwise use a private dependency.</p>
+<pre><code class="language-cpp">#include &quot;TargetLock/TargetLockComponent.h&quot;
+#include &quot;TargetLock/TargetLockAnchorComponent.h&quot;
+
+// In your existing Actor/Pawn/Character constructor:
+TargetLock = CreateDefaultSubobject&lt;UTargetLockComponent&gt;(TEXT(&quot;TargetLock&quot;));
+TargetLock-&gt;bUseExternalPresentation = true;
+
+// In your existing target&#39;s constructor, after creating its root:
+TargetAnchor = CreateDefaultSubobject&lt;UTargetLockAnchorComponent&gt;(TEXT(&quot;TargetAnchor&quot;));
+TargetAnchor-&gt;SetupAttachment(GetRootComponent());
+</code></pre>
+<p>Store these pointers in reflected component properties. Bind input to <code>ToggleTargetLock()</code> and <code>SwitchTargetByInputDirection()</code>. Bind to <code>OnTargetLockStateChanged</code> and <code>OnTargetLockTargetChanged</code> for project behavior.</p>
+<p>Component subclasses can override these methods:</p>
+<pre><code class="language-cpp">bool GetTargetLockViewPoint_Implementation(FVector&amp; ViewLocation, FRotator&amp; ViewRotation) const override;
+bool IsTargetAllowedForSource_Implementation(const AActor* SourceActor) const override;
+FVector GetTargetLocation_Implementation() const override;
+</code></pre>
+<p>The first belongs to the lock component; the other two belong to the anchor. Existing C++ <code>CanBeLockedBy()</code> overrides remain available. Prefer the new eligibility hook when you want to preserve the built-in guards automatically.</p>
+<h2 id="Integration-boundaries-and-upgrading">Boundaries and upgrading</h2>
+<p>Built-in speed and movement-rotation settings apply to <code>ACharacter</code> with <code>UCharacterMovementComponent</code>. Generic Pawns and Actors use the same targeting logic; integrate their movement through events or external presentation. No showcase Character, GameMode, controller, HUD, animation, sound, or map is required for reusable targeting.</p>
+<p>Selection and lock state are local. The optional controller-rotation RPC does not replicate an authoritative combat target. Your server must validate target eligibility, range, line of sight, and damage using your existing multiplayer architecture.</p>
+<p>Existing reflected class, component, property, and asset names remain unchanged. External presentation defaults off, so existing Character setups retain their configured presentation. Existing Blueprint calls to <strong>Get Target Location</strong> retain the same function name; subclasses can now override it. Rebuild C++ modules and compile project Blueprints after updating. Back up production projects before replacing plugin source or assets.</p>
+<p>The independent integration checks cover UE 5.4 and UE 5.8 locally. Individual third-party frameworks and the complete release engine/platform matrix need their own validation.</p>
+<blockquote class="notice"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p></blockquote>
+</section>
+<section id="Settings" aria-label="Settings"><h1 id="Settings-settings-reference">Settings reference</h1>
+<p><a href="#README">Main guide</a> · <a href="#Integration">Integration</a> · <a href="#ReleaseNotes">Upgrade notes</a></p>
+<p>These settings belong to the reusable targeting system. Edit component defaults in your Blueprint. Secondary tuning controls appear under Advanced. Read each setting together with its enable switch.</p>
+<h2 id="Settings-lock-component">Lock component</h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Use External Presentation</strong></td>
+<td>Keep acquisition, switching, visibility checks, and events while leaving camera, rotation, movement, and UI to your own systems. Use Set External Presentation Enabled to change this during play.</td>
+</tr>
+<tr>
+<td><strong>Acquire Search Settings</strong></td>
+<td>Rules used to find the initial target and automatic replacement targets.</td>
+</tr>
+<tr>
+<td><strong>Line Of Sight Origin</strong></td>
+<td>Where acquisition and active-lock line-of-sight traces begin. Player View Point is the default and requires a clear path from the current camera to the target. Character Eyes and Character Eyes or Player View Point remain optional alternatives. Virtual aim offsets do not move the camera visibility origin. View-cone and screen-center scoring still use the player view.</td>
+</tr>
+<tr>
+<td><strong>Lose Target Distance</strong></td>
+<td>Maximum distance in centimeters before the current target is lost. Set to 0 to disable the distance limit.</td>
+</tr>
+<tr>
+<td><strong>Rotation Interp Speed</strong></td>
+<td>Interpolation speed used when rotating the controller and character toward the target. Higher values turn faster.</td>
+</tr>
+<tr>
+<td><strong>Focus Point World Offset</strong></td>
+<td>World-space offset in centimeters added to the selected anchor location when calculating aim rotation.</td>
+</tr>
+<tr>
+<td><strong>Rotate Controller To Target</strong></td>
+<td>Rotates the owning player&#39;s control rotation toward the selected target while locked.</td>
+</tr>
+<tr>
+<td><strong>Rotate Character To Target</strong></td>
+<td>Rotates the owning Character, Pawn, or Actor&#39;s yaw toward the selected target while locked. Ignored when External Presentation is enabled.</td>
+</tr>
+<tr>
+<td><strong>Auto Retarget When Lost</strong></td>
+<td>Searches for another eligible anchor when the current target is destroyed, disabled, obstructed, or out of range.</td>
+</tr>
+<tr>
+<td><strong>Use Locked Max Walk Speed</strong></td>
+<td>Temporarily applies Locked Max Walk Speed while target lock is active, then restores the previous value.</td>
+</tr>
+<tr>
+<td><strong>Locked Max Walk Speed</strong></td>
+<td>Character movement speed in Unreal units per second while locked.</td>
+</tr>
+<tr>
+<td><strong>Adjust Movement Rotation Settings</strong></td>
+<td>Temporarily configures Character Movement for strafing while locked, then restores the previous rotation settings.</td>
+</tr>
+<tr>
+<td><strong>Line Of Sight Check Interval</strong></td>
+<td>Time in seconds between line-of-sight traces while locked. Lower values react sooner but perform more traces.</td>
+</tr>
+<tr>
+<td><strong>Line Of Sight Loss Grace Period</strong></td>
+<td>Continuous obstruction time allowed before the current target is lost. Set to 0 for immediate loss.</td>
+</tr>
+<tr>
+<td><strong>Use Camera Position Offset</strong></td>
+<td>Enables an alternate camera-relative location while locked.</td>
+</tr>
+<tr>
+<td><strong>Target Lock Camera Relative Location</strong></td>
+<td>Target relative location in centimeters for the active Camera&#39;s attached Spring Arm, or the active Camera itself when it has no Spring Arm. Falls back to the first valid Camera or Spring Arm when none is active. Also defines the virtual aim origin when camera application is disabled.</td>
+</tr>
+<tr>
+<td><strong>Apply Camera Position Offset To Active Camera</strong></td>
+<td>Applies Target Lock Camera Relative Location to the active Camera&#39;s attached Spring Arm, or to the active Camera itself when it has no Spring Arm. Falls back to the first valid Camera or Spring Arm when none is active. Disable to use it only for aim and acquisition scoring; Player View Point visibility still starts at the actual camera.</td>
+</tr>
+<tr>
+<td><strong>Blend Camera Position Offset</strong></td>
+<td>Smoothly blends to and from the target-lock camera location instead of changing it immediately.</td>
+</tr>
+<tr>
+<td><strong>Camera Position Offset Blend In Speed</strong></td>
+<td>Interpolation speed used when blending into the target-lock camera location.</td>
+</tr>
+<tr>
+<td><strong>Camera Position Offset Blend Out Speed</strong></td>
+<td>Interpolation speed used when restoring the previous camera location.</td>
+</tr>
+<tr>
+<td><strong>Camera Aim Rotation Offset</strong></td>
+<td>Rotation offset, in degrees, added after calculating the controller aim rotation.</td>
+</tr>
+<tr>
+<td><strong>Show Focused Target Reticle</strong></td>
+<td>Shows a screen-space reticle at the selected anchor while target lock is active.</td>
+</tr>
+<tr>
+<td><strong>Focused Target Reticle Widget Class</strong></td>
+<td>Widget class displayed as the focused-target reticle. The built-in class works without project assets.</td>
+</tr>
+<tr>
+<td><strong>Focused Target Reticle World Offset</strong></td>
+<td>World-space offset in centimeters added to the anchor location when positioning the focused-target reticle.</td>
+</tr>
+<tr>
+<td><strong>Focused Target Reticle Draw Size</strong></td>
+<td>Draw size of the focused-target reticle in screen pixels.</td>
+</tr>
+<tr>
+<td><strong>Enable Automatic Toggle Input Polling</strong></td>
+<td>Polls the configured legacy input keys and toggles target lock. Configure before Begin Play; Enhanced Input users can leave this disabled and call Toggle Target Lock directly.</td>
+</tr>
+<tr>
+<td><strong>Toggle Keyboard Key</strong></td>
+<td>Keyboard key checked during each automatic input poll. Changes take effect on the next poll.</td>
+</tr>
+<tr>
+<td><strong>Toggle Gamepad Key</strong></td>
+<td>Gamepad key checked during each automatic input poll. Changes take effect on the next poll.</td>
+</tr>
+<tr>
+<td><strong>Toggle Input Poll Interval</strong></td>
+<td>Time in seconds between legacy input polls. Read when polling starts at Begin Play.</td>
+</tr>
+<tr>
+<td><strong>Direction Switch View Angle</strong></td>
+<td>Full width of the camera-forward cone used for directional switching, in degrees. The default 160 allows 80 degrees to either side, including off-screen targets. Candidates must have camera line of sight; targets behind the camera never qualify.</td>
+</tr>
+<tr>
+<td><strong>Direction Switch Min Dot</strong></td>
+<td>Minimum alignment between directional input and a candidate&#39;s camera-relative direction. Higher values require more precise input.</td>
+</tr>
+<tr>
+<td><strong>Direction Switch View Distance Weight</strong></td>
+<td>Penalty applied to camera-angle separation during directional switching. Higher values favor targets nearer the current target in the camera view, even off screen.</td>
+</tr>
+<tr>
+<td><strong>Debug Draw</strong></td>
+<td>Draws the current target, view-to-target line, and cached line-of-sight result in non-Shipping builds. Disabled by default.</td>
+</tr>
+<tr>
+<td><strong>Debug Line Thickness</strong></td>
+<td>Thickness of target-lock debug lines in screen-independent Unreal debug units.</td>
+</tr>
+<tr>
+<td><strong>Log State Transitions</strong></td>
+<td>Writes activation and target-change messages to the log. Disabled by default.</td>
+</tr>
+<tr>
+<td><strong>Sync Controller Rotation To Server</strong></td>
+<td>Sends locally calculated controller rotation to the owning server at a limited rate. Enable only on replicated multiplayer Characters that need server-side control rotation.</td>
+</tr>
+<tr>
+<td><strong>Server Control Rotation Sync Rate</strong></td>
+<td>Maximum controller-rotation updates sent per second while server synchronization is enabled.</td>
+</tr>
+<tr>
+<td><strong>On Target Lock State Changed</strong></td>
+<td>Fired after target lock activates or deactivates.</td>
+</tr>
+<tr>
+<td><strong>On Target Lock Target Changed</strong></td>
+<td>Fired whenever the selected anchor changes. Either anchor can be null when selecting or clearing a target.</td>
+</tr>
+</tbody></table>
+<h2 id="Settings-acquisition-search-settings">Acquisition search settings</h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Max Distance</strong></td>
+<td>Maximum acquisition distance in centimeters. Zero prevents acquisition.</td>
+</tr>
+<tr>
+<td><strong>Require Line Of Sight</strong></td>
+<td>Require an unobstructed trace from the configured line-of-sight origin to the target anchor.</td>
+</tr>
+<tr>
+<td><strong>Line Of Sight Trace Channel</strong></td>
+<td>Collision channel used by acquisition and active-lock line-of-sight traces.</td>
+</tr>
+<tr>
+<td><strong>Minimum View Dot</strong></td>
+<td>Minimum dot product between the view direction and the target direction. One is directly ahead, zero allows targets up to 90 degrees away, and minus one allows targets behind.</td>
+</tr>
+<tr>
+<td><strong>Use Screen Center Scoring</strong></td>
+<td>Include normalized screen-center distance when a valid player controller is available.</td>
+</tr>
+<tr>
+<td><strong>Screen Center Weight</strong></td>
+<td>Contribution of screen-center distance to the score. Lower final scores win.</td>
+</tr>
+<tr>
+<td><strong>Distance Weight</strong></td>
+<td>Contribution of normalized world distance to the score. Lower final scores win.</td>
+</tr>
+<tr>
+<td><strong>View Angle Weight</strong></td>
+<td>Contribution of view-angle error to the score. Lower final scores win.</td>
+</tr>
+</tbody></table>
+<h2 id="Settings-target-anchor">Target anchor</h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Enabled</strong></td>
+<td>Whether this anchor can be acquired or retained as the current target.</td>
+</tr>
+<tr>
+<td><strong>Selection Priority Bias</strong></td>
+<td>Bias subtracted from the candidate score. Higher values make this anchor more likely to be selected; lower values make it less likely.</td>
+</tr>
+<tr>
+<td><strong>Require Target Lockable Interface</strong></td>
+<td>Require the owning actor to implement the optional Target Lockable marker interface.</td>
+</tr>
+<tr>
+<td><strong>Target Location World Offset</strong></td>
+<td>World-space offset in centimeters added to this component&#39;s world location.</td>
+</tr>
+<tr>
+<td><strong>Additional Line Of Sight Probe Offsets</strong></td>
+<td>Optional world-space offsets from the primary target location used as additional line-of-sight probes. The primary location is always tested first. Add only points that remain inside the target&#39;s visible body.</td>
+</tr>
+</tbody></table>
+<h2 id="Settings-reticle-widget">Reticle widget</h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Reticle Color</strong></td>
+<td>Primary reticle color.</td>
+</tr>
+<tr>
+<td><strong>Outline Color</strong></td>
+<td>Contrast color drawn behind the reticle. Set alpha to zero to disable the outline.</td>
+</tr>
+<tr>
+<td><strong>Line Thickness</strong></td>
+<td>Thickness of the colored reticle lines in Slate units.</td>
+</tr>
+<tr>
+<td><strong>Outline Thickness</strong></td>
+<td>Thickness of the contrast outline in Slate units.</td>
+</tr>
+<tr>
+<td><strong>Padding Ratio</strong></td>
+<td>Padding between the widget edge and each reticle corner, relative to the shorter widget side.</td>
+</tr>
+<tr>
+<td><strong>Corner Arm Ratio</strong></td>
+<td>Length of each corner arm, relative to the shorter widget side.</td>
+</tr>
+<tr>
+<td><strong>Center Diamond Ratio</strong></td>
+<td>Radius of the center diamond, relative to the shorter widget side. Set to zero to hide it.</td>
+</tr>
+</tbody></table>
+<h2 id="Settings-practical-defaults">Practical defaults</h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Acquisition maximum distance</td>
+<td>2500 cm</td>
+</tr>
+<tr>
+<td>Minimum view dot</td>
+<td>-0.25</td>
+</tr>
+<tr>
+<td>Retention distance</td>
+<td>3000 cm; zero disables the limit</td>
+</tr>
+<tr>
+<td>Switching cone</td>
+<td>160 degrees full width</td>
+</tr>
+<tr>
+<td>Active visibility check interval</td>
+<td>0.05 seconds</td>
+</tr>
+<tr>
+<td>Continuous obstruction grace</td>
+<td>0.65 seconds</td>
+</tr>
+<tr>
+<td>Locked Character Movement speed</td>
+<td>300 cm/s</td>
+</tr>
+<tr>
+<td>Rotation interpolation speed</td>
+<td>10; zero snaps</td>
+</tr>
+<tr>
+<td>Camera-position override</td>
+<td>Disabled</td>
+</tr>
+<tr>
+<td>External presentation</td>
+<td>Disabled</td>
+</tr>
+<tr>
+<td>Automatic key polling</td>
+<td>Disabled</td>
+</tr>
+<tr>
+<td>Server rotation synchronization</td>
+<td>Disabled</td>
+</tr>
+<tr>
+<td>Debug drawing and transition logs</td>
+<td>Disabled</td>
+</tr>
+</tbody></table>
+<p>Acquisition and manual switching use different cones. The acquisition minimum view dot can admit targets behind the camera when negative; set it to zero or above for a forward-only acquisition region. Manual switching never selects behind the camera.</p>
+<blockquote class="notice"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p></blockquote>
+</section>
+<section id="ReleaseNotes" aria-label="ReleaseNotes"><h1 id="ReleaseNotes-target-lock-system-1-0-1">Target Lock System 1.0.1</h1>
+<p>Release candidate documentation. The published Fab version remains the authoritative compatibility record until this update is approved.</p>
+<h2 id="ReleaseNotes-changes">Changes</h2>
+<ul>
+<li>Add targeting to an existing Character, Pawn, or Actor without using a demo base class.</li>
+<li>Let an existing camera, locomotion, and UI system own presentation through <strong>Use External Presentation</strong> and target-change delegates.</li>
+<li>Override camera viewpoint, target eligibility, and focus position in Blueprint or C++.</li>
+<li>Use camera-origin visibility by default, with continuous-obstruction grace and optional target probes.</li>
+<li>Switch within a configurable camera cone, default 160 degrees, while requiring camera line of sight.</li>
+<li>Restore only the movement settings changed by the component.</li>
+<li>Replace the example arena with a medieval courtyard and directional player locomotion, roaming targets, cover, keyboard/mouse, gamepad, and touch controls.</li>
+<li>Expand integration, input, scene, animation, and Blueprint tooltip regression checks.</li>
+</ul>
+<h2 id="ReleaseNotes-upgrade">Upgrade</h2>
+<p>Back up the project and install the package for its exact Unreal Engine version. Rebuild native modules and compile project Blueprints. Existing reflected targeting class and function names are retained; the new external-presentation mode defaults off.</p>
+<p>The former example-map path redirects to <code>/TargetLock/Example/Maps/TargetLockShowcase</code>. Set Editor Startup Map and Game Default Map explicitly if your project should start there. Production projects can keep their own maps and GameMode.</p>
+<p>Camera-origin visibility is now the default. Existing serialized component settings may retain their previous origin. Review <strong>Line Of Sight Origin</strong> on existing components. Choose <strong>Character Eyes</strong> explicitly only if that is the intended behavior in your game.</p>
+<p>For custom C++ anchor subclasses, <code>CanBeLockedBy()</code> remains available. Prefer <code>IsTargetAllowedForSource_Implementation()</code> when project rules should run after built-in eligibility checks. <code>GetTargetLocation_Implementation()</code> and <code>GetTargetLockViewPoint_Implementation()</code> are the new Blueprint-native extension points.</p>
+<p>To roll back, restore the previous plugin and the matching project backup together. Do not save shared content in a newer Unreal version if older-engine compatibility is required.</p>
+<blockquote class="notice"><p>If Target Lock helps your project, consider an honest review on the <strong><a href="https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9">Target Lock Fab listing</a></strong>.</p></blockquote>
+</section></main></div><footer>Target Lock documentation · FunByDefault</footer></body></html>
