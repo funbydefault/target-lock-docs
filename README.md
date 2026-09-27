@@ -5,7 +5,7 @@
 Add targeting to your existing character, pawn, or actor. Use the built-in camera and movement behavior, or let your own systems handle presentation through events and Blueprint overrides.
 
 > [!NOTE]
-> This guide describes the **1.0.1 release candidate**. Check the [Fab listing](https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9) for the currently available release and supported engine versions.
+> This guide describes the **1.1 release candidate**. Check the [Fab listing](https://www.fab.com/listings/0bc4b733-f81e-44ba-9882-0189410586f9) for the currently available release and supported engine versions.
 
 [Integration guide](Integration.md) · [Settings reference](Settings.md) · [Upgrade notes](ReleaseNotes.md)
 

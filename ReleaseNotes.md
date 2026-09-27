@@ -1,4 +1,4 @@
-# Target Lock 1.0.1
+# Target Lock 1.1
 
 Release candidate documentation. The published Fab version remains the authoritative compatibility record until this update is approved.
 
